@@ -2,7 +2,7 @@
 
 # check_last_nls_backup.sh
 # version 0.1
-LAST=$(curator --loglevel warn show snapshots --repository "SharedBackupRepo" --newer-than 1 --time-unit days |tail -1)
+LAST=$(curator --loglevel warn show snapshots --repository "SharedBackupRepo" --newer-than 25 --time-unit hours  |tail -1)
 RESULT=$(curl -s -XGET "localhost:9200/_snapshot/SharedBackupRepo/${LAST}?pretty" | awk -F\" '/state/ {print $4}')
 
 # debug
