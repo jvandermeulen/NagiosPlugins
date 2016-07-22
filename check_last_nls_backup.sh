@@ -24,7 +24,7 @@ RESULT=$(curl -s -XGET "localhost:9200/_snapshot/SharedBackupRepo/${LAST}?pretty
 
 case ${RESULT} in
         SUCCESS)
-                echo "OK: Last backup successful ${LAST}"
+                echo "OK: Last backup successful [${LAST}]"
                 exit 0
                 ;;
         PARTIAL*)
