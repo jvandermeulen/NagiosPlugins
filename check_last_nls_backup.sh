@@ -18,7 +18,7 @@ MULTILINE=""
 LAST=$(curator --loglevel warn show snapshots --repository "SharedBackupRepo" --newer-than 25 --time-unit hours  |tail -1)
 RESULT=$(curl -s -XGET "localhost:9200/_snapshot/SharedBackupRepo/${LAST}?pretty" | awk -F\" '/state/ {print $4}')
 
-TIMESTAMP=$(echo ${LAST} | awk -F\- '{print $2}')
+D=$(echo ${LAST} | awk -F\- '{print $2}')
 PRETTY_TIMESTAMP=$(date -d "$(echo ${D:0:8} ${D:(-6):2}:${D:(-4):2}:${D:(-2):2})")
 
 # debug
