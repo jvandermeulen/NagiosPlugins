@@ -29,12 +29,12 @@ case ${RESULT} in
                 ;;
         PARTIAL*)
                 REASON=$(curl -s -XGET "localhost:9200/_snapshot/SharedBackupRepo/${LAST}?pretty" | awk -F \" '/reason/ {print $4}')
-                echo -e "WARNING: Last backup not fully successful but  ${RESULT}${MULTILINE}${REASON}"
+                echo -e "WARNING: Last backup not fully successful but  ${RESULT}.${MULTILINE}${REASON}"
                 exit 1
                 ;;
         FAILED)
                 REASON=$(curl -s -XGET "localhost:9200/_snapshot/SharedBackupRepo/${LAST}?pretty" | awk -F \" '/reason/ {print $4}')
-                echo -e "CRITICAL: Last backup FAILED. Please verify curator session $LAST ${RESULT}${MULTILINE}${REASON}"
+                echo -e "CRITICAL: Last backup FAILED. Please verify curator session $LAST ${RESULT}.${MULTILINE}${REASON}"
                 exit 2
                 ;;
         *)
