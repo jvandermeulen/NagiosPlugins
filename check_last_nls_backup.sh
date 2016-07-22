@@ -6,6 +6,7 @@
 # Version:      0.2 changed --time-unit from 1 days to 25 hours, it appeared that a backup made yesterday evening (23:30) did not match filter "--newer-than 1 --time-unit days",  I assumed a last 24 hours filter. No matches
 # Version:      0.3 add multiline output to PARTIAL or FAILED backups: reason for failure
 # Version:      0.5 it appears that NRDS Version: 1.5.4 Date: 05/06/2016  cannot handle multiline output, so make it configurable
+# Idea:         date -d "$(echo ${D:0:8} ${D:(-6):2}:${D:(-4):2}:${D:(-2):2})"
 
 
 # Customize this:
@@ -17,6 +18,9 @@ MULTILINE=""
 LAST=$(curator --loglevel warn show snapshots --repository "SharedBackupRepo" --newer-than 25 --time-unit hours  |tail -1)
 RESULT=$(curl -s -XGET "localhost:9200/_snapshot/SharedBackupRepo/${LAST}?pretty" | awk -F\" '/state/ {print $4}')
 
+TIMESTAMP=$(echo ${LAST} | awk -F\- '{print $2}')
+PRETTY_TIMESTAMP=$(date -d "$(echo ${D:0:8} ${D:(-6):2}:${D:(-4):2}:${D:(-2):2})")
+
 # debug
 #echo LAST=${LAST}, RESULT=${RESULT}.
 #set -x
@@ -24,7 +28,7 @@ RESULT=$(curl -s -XGET "localhost:9200/_snapshot/SharedBackupRepo/${LAST}?pretty
 
 case ${RESULT} in
         SUCCESS)
-                echo "OK: Last backup successful [${LAST}]"
+                echo "OK: Last backup successful [${LAST} on ${PRETTY_TIMESTAMP}]"
                 exit 0
                 ;;
         PARTIAL*)
