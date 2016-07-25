@@ -30,7 +30,8 @@ CURATOR_TIME_CORRECTION=" +0000"
 LAST=$(curator --loglevel warn show snapshots --repository "SharedBackupRepo" --newer-than ${MOSTRECENT_TIME_FILTER} --time-unit ${MOSTRECENT_TIME_UOM} |tail -1)
 RESULT=$(curl -s -XGET "localhost:9200/_snapshot/SharedBackupRepo/${LAST}?pretty" | awk -F\" '/state/ {print $4}')
 
-D=$(echo ${LAST} | awk -F\- '{print $2}')
+D=$(echo ${LAST} | awk -F\- '{print $2}' 2>/dev/null)
+[[ -n $D ]] || { echo "UNKNOWN: Unable to determine result within last ${MOSTRECENT_TIME_FILTER} ${MOSTRECENT_TIME_UOM}: $LAST ${RESULT}" ; exit 3; }
 PRETTY_TIMESTAMP=$(date -d "$(echo ${D:0:8} ${D:(-6):2}:${D:(-4):2}:${D:(-2):2})${CURATOR_TIME_CORRECTION}")
 
 
@@ -50,7 +51,7 @@ case ${RESULT} in
                 exit 2
                 ;;
         *)
-                echo "UNKNOWN: Unable to determine result within ${MOSTRECENT_TIME_FILTER} ${MOSTRECENT_TIME_UOM}: $LAST ${RESULT}"
+                echo "UNKNOWN: Unable to determine result within last ${MOSTRECENT_TIME_FILTER} ${MOSTRECENT_TIME_UOM}: $LAST ${RESULT}"
                 exit 3
                 ;;
 esac
