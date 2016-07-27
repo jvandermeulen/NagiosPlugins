@@ -1,12 +1,13 @@
 #!/bin/bash
 # Script: check_nna_flow_devices.sh
-# Purpose: 	Check number of running NetFlow or sFlow devices on Nagios Network Analyzer server compared 
-# 		to the configured devices
+# Purpose: 	Check number of running NetFlow or sFlow devices compared to the number configured devices on Nagios Network Analyzer server 
 # Author: Jorgen van der Meulen (Conclusion Xforce)
 # Version: see print_version function
 # Change log: 	0.1 - Initial creation
 #		0.2 - added type parameter
 #		0.3 - changed calculation of warning/critical thresholds (X-1 = warning, X-2 = critical)
+#		0.4 - improved explanation
+#
 # Requirements: Admin -> System Config \ System Settings -> Allow HTML Tags in Host/Service Status (checked)
 # Installation: This script should be placed on a Nagios Network Analyzer server, made executable and configured in NRPE. 
 # 				Nagios client NCPA needs no configuration, just put it underneath directory /usr/local/ncpa/plugin/ 
@@ -20,7 +21,7 @@ STATE_UNKNOWN=3
 
 function print_version () {
     cat <<EOF
-check_flow_devices 0.3 - Copyright Conclusion Xforce
+check_flow_devices 0.4 - Copyright Conclusion Xforce
 
 This Nagios plugin comes with no warranty. You can use and distribute it 
 under terms of the GNU General Public License Version 2 (GPL V2) or later. 
@@ -84,7 +85,7 @@ if [ "$FLOW_PROCESSES_DIVIDEDBYTWO" -le "$WARN" ]; then
 fi
 
 echo "${NAGRES}: ${FLOW_PROCESSES_DIVIDEDBYTWO} active ${flow_type} devices [total configured ${flow_type} devices: ${FLOW_SOURCES}] |${flow_type}DevsActive=$FLOW_PROCESSES_DIVIDEDBYTWO;$WARN;$CRIT;;"
-echo "Additional info: found a number of ${FLOW_PROCESSES} process(es) on $(hostname) with pattern <b>${PATTERN}</b>, each configured device has two processes. ${REMEDIATE_HINT}"
+echo "Additional info: found ${FLOW_PROCESSES} process(es) on $(hostname) matching pattern <b>${PATTERN}</b>, each configured device has two processes. ${REMEDIATE_HINT}"
 exit $NAGSTAT
 }
 
