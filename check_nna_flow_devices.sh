@@ -38,7 +38,7 @@ EOF
 }
 
 function print_help () {
-echo -e "\nPlugin for monitoring flow capture daemon on a Nagios Network Analyzer\n"
+echo -e "\nPlugin for monitoring flow capture daemons on a Nagios Network Analyzer server\n"
 print_usage
 }
 
@@ -56,7 +56,7 @@ case $flow_type in
 	PATTERN=sfcapd
 	;;
        *)
-	echo -e "CRITICAL: you did not supply a valid flowtype. Please remember options are case sensitive!\n\n" ; print_usage ; exit ${STATE_UNKNOWN}
+	echo -e "CRITICAL: you did not supply a valid flow type. Please remember arguments are case sensitive!\n\n" ; print_usage ; exit ${STATE_UNKNOWN}
 	;;
 esac
         
