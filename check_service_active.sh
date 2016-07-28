@@ -1,5 +1,9 @@
 #!/bin/bash
 # Script:       service_active.sh
+# Purpose:      The need for a script like this arose soon after Red Hat Enterprise Linux switched from upstart to systemd. 
+#               Most of our customers have a Nagios agent called NCPA installed on their CentOS/RHEL servers. 
+#               NCPA is perfectly capable of monitoring upstart/sysV services that should be started or should be stopped, however
+#               NCPA 1.8.1 is not yet able to handle systemd services (version 2.x is on it's way). This script wil loose it reason to exist (for us) when Nagios Enterprises release NCPA (both plugin en Nagios XI wizard) that can handle systemd services.
 # Author:       Conclusion Xforce
 # Version:      0.1 Jorgen: initial version of check for systemd service (expects one argument)
 # Version:      1.0 Jorgen: production ready
@@ -21,7 +25,8 @@ fi
 #RETCODE=$?
 #if [ $RETCODE -eq 0 ]; then
 
-# result "active" is not enough... second word should be running (not: exited)
+# Result "active" is not enough... output between round brackets should be "running" (not: "exited"). 
+# Should Logstash become low on memory it may lead to a "active (excited)" state, an indication to check for memory/java issues.
 FULLRESULT=$(systemctl status ${SERVICE} | awk '/ .*Active:/ {$1=""; print $0}'|sed 's/^ *//')
 RESULT=$(echo ${FULLRESULT} |awk '{print $1, $2}')
 if [ "$RESULT" == "active (running)" ]; then
