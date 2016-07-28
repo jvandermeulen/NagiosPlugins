@@ -9,8 +9,9 @@
 #		0.4 - improved explanation
 #
 # Requirements: Admin -> System Config \ System Settings -> Allow HTML Tags in Host/Service Status (checked)
-# Installation: This script should be placed on a Nagios Network Analyzer server, made executable and configured in NRPE. 
-# 				Nagios client NCPA needs no configuration, just put it underneath directory /usr/local/ncpa/plugin/ 
+# Installation: This script should be placed on a Nagios Network Analyzer server, made executable and configured as an active or passive check. 
+# 		Nagios client NCPA needs no configuration, just put it underneath directory /usr/local/ncpa/plugin/ 
+#               Nagios client NRPE needs some configuration, please read paragraph Customizing Your Configuration https://assets.nagios.com/downloads/nagioscore/docs/nrpe/NRPE.pdf
 
 
 #declare states
@@ -31,9 +32,9 @@ EOF
 
 function print_usage () {
     cat <<EOF
-Usage: check_flow_devices -h, --help
-       check_flow_devices -V, --version
-       check_flow_devices --type NetFlow|sFlow  	WARNING: case sensitive!!
+Usage: check_flow_devices.sh -h, --help
+       check_flow_devices.sh -V, --version
+       check_flow_devices.sh --type NetFlow|sFlow  	WARNING: case sensitive!!
 EOF
 }
 
@@ -56,7 +57,7 @@ case $flow_type in
 	PATTERN=sfcapd
 	;;
        *)
-	echo -e "CRITICAL: you did not supply a valid flow type. Please remember arguments are case sensitive!\n\n" ; print_usage ; exit ${STATE_UNKNOWN}
+	echo -e "CRITICAL: you did not supply a valid flow type. Please note arguments are case sensitive!\n\n" ; print_usage ; exit ${STATE_UNKNOWN}
 	;;
 esac
         
