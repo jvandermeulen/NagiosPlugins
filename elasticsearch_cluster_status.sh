@@ -1,8 +1,9 @@
 #!/bin/bash
 # Script:       elasticsearch_cluster_status.sh
 # Purpose:      Check elasticsearch cluster status
-# Author:       Conclusion Xforce
-# Version:      0.1 Jorgen: initial version of check
+# Original author:       unknown
+# Altered by    Conclusion Xforce
+# Version:      0.1 Jorgen: initial adapted version of check that used abbreviated performance data (so that graphs will not cut off multiple sources)
 # Version:      1.0 Jorgen: production ready
 
 type curl >/dev/null 2>&1 || { echo >&2 "Please install curl package."; exit 3; }
