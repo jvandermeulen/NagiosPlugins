@@ -7,6 +7,7 @@
 #		0.2 - added type parameter
 #		0.3 - changed calculation of warning/critical thresholds (X-1 = warning, X-2 = critical)
 #		0.4 - improved explanation
+#		0.5 - changed status output, "device(s)" should be applicable to singular and plural device counts
 #
 # Requirements: Admin -> System Config \ System Settings -> Allow HTML Tags in Host/Service Status (checked)
 # Installation: This script should be placed on a Nagios Network Analyzer server, made executable and configured as an active or passive check. 
@@ -22,7 +23,7 @@ STATE_UNKNOWN=3
 
 function print_version () {
     cat <<EOF
-check_flow_devices 0.4 - Copyright Conclusion Xforce
+check_flow_devices 0.5 - Copyright Conclusion Xforce
 
 This Nagios plugin comes with no warranty. You can use and distribute it 
 under terms of the GNU General Public License Version 2 (GPL V2) or later. 
@@ -85,7 +86,7 @@ if [ "$FLOW_PROCESSES_DIVIDEDBYTWO" -le "$WARN" ]; then
 	REMEDIATE_HINT="Check your <a href="http://$(hostname)/nagiosna/index.php/sources">NNA Sources Page</a> and look for stopped devices"
 fi
 
-echo "${NAGRES}: ${FLOW_PROCESSES_DIVIDEDBYTWO} active ${flow_type} devices [total configured ${flow_type} devices: ${FLOW_SOURCES}] |${flow_type}DevsActive=$FLOW_PROCESSES_DIVIDEDBYTWO;$WARN;$CRIT;;"
+echo "${NAGRES}: ${FLOW_PROCESSES_DIVIDEDBYTWO} active ${flow_type} device(s) [total configured ${flow_type} devices: ${FLOW_SOURCES}] |${flow_type}DevsActive=$FLOW_PROCESSES_DIVIDEDBYTWO;$WARN;$CRIT;;"
 echo "Additional info: found ${FLOW_PROCESSES} process(es) on $(hostname) matching pattern <b>${PATTERN}</b>, each configured device has two processes. ${REMEDIATE_HINT}"
 exit $NAGSTAT
 }
