@@ -10,6 +10,7 @@
 #               0.6 added readable date using "date -d <curatordate>, changed --newer-than and --time-unit parameters to variables to improve UNKOWN result with regards to timeframe
 #               0.7 added help and version info
 #               0.8 oops.. name of backup repository was hardcoded in this script, made it configurable using variable MYREPO
+#               0.9 handle IN_PROGRESS state as UNKNOWN
 #==================================================
 # Customize this:
 
@@ -34,7 +35,7 @@ MYREPO="SharedBackupRepo"
 
 function print_version () {
     cat <<EOF
-check_last_nls_backup.sh - 0.8 - Copyright Conclusion Xforce
+check_last_nls_backup.sh - 0.9 - Copyright Conclusion Xforce
 This Nagios plugin comes with no warranty. You can use and distribute it
 under terms of the GNU General Public License Version 2 (GPL V2) or later.
 EOF
@@ -71,11 +72,15 @@ case ${RESULT} in
                 ;;
         FAILED)
                 get_reason_for_failure
-                echo -e "CRITICAL: Last backup FAILED. Please verify curator session $LAST ${RESULT}. ${MULTILINE}${REASON}"
+                echo -e "CRITICAL: Last backup FAILED. Please verify curator session ${LAST} ${RESULT}. ${MULTILINE}${REASON}"
                 exit 2
                 ;;
+        IN_PROGRESS)
+                echo "UNKNOWN: Active session detected. ${LAST} is currently in progress. Please try again in a few minutes."
+                exit 3
+                ;;
         *)
-                echo "UNKNOWN: Unable to determine result within last ${MOSTRECENT_TIME_FILTER} ${MOSTRECENT_TIME_UOM}: $LAST ${RESULT}"
+                echo "UNKNOWN: Unable to determine result within last ${MOSTRECENT_TIME_FILTER} ${MOSTRECENT_TIME_UOM}: ${LAST} ${RESULT}"
                 exit 3
                 ;;
 esac
