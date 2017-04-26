@@ -3,7 +3,8 @@
 # Purpose:      Check RHEL subscription status
 # Author:       Conclusion Xforce
 # Version:      0.1 Jorgen: initial version of check
-
+#               0.2 Jorgen: run sudo with "-A" option to make sure a failure is returned instead of infinite waiting for user password when sudoers is not edited              
+#               sudo: no askpass program specified, try setting SUDO_ASKPASS
 # Requirements:
 #               binary files:   subscription-manager, xargs, awk
 #               config files:   /etc/os-release
@@ -30,7 +31,7 @@ type ${CMD} >/dev/null 2>&1 || { echo >&2 "UNKNOWN: no ${CMD} binary found on $(
 #Check xargs
 type xargs >/dev/null 2>&1 || { echo >&2 "UNKNOWN: no xargs binary found. Please install findutils package."; exit 3; }
 
-STATUS_MSG_SHORT=$(sudo ${CMD} status ${CMD_PROXY_OPTS}| sed  -ne '/Overall Status:/p' -ne '/^-/p' | xargs)
+STATUS_MSG_SHORT=$(sudo -A ${CMD} status ${CMD_PROXY_OPTS}| sed  -ne '/Overall Status:/p' -ne '/^-/p' | xargs)
 STATUSCODE=$(echo $?)
 
 #echo ${STATUSCODE}
