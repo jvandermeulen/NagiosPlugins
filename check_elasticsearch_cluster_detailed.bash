@@ -16,7 +16,8 @@
 
 PROGNAME=`basename $0`
 #VERSION="Version 0.2.0,"
-VERSION="Version 0.2.0 shorter names,"
+#VERSION="Version 0.2.0 shorter names,"
+VERSION="Version 0.2.1 shorter names,"
 
 
 AUTHOR="Andrew Lyon, Based on Mike Adolphs (http://www.matejunkie.com/) check_nginx.sh code"
@@ -117,7 +118,7 @@ get_vals() {
     active_shards=`grep active_shards ${filename} | awk '{print $3}' | sed 's|[\r",]||g'`
     relocating_shards=`grep relocating_shards ${filename} | awk '{print $3}' | sed 's|[\r",]||g'`
     initializing_shards=`grep initializing_shards ${filename} | awk '{print $3}' | sed 's|[\r",]||g'`
-    unassigned_shards=`grep unassigned_shards ${filename} | awk '{print $3}' | sed 's|[\r",]||g'`
+    unassigned_shards=`grep [^_]unassigned_shards ${filename} | awk '{print $3}' | sed 's|[\r",]||g'`
     rm -f ${filename}
 
     # Determine the Nagios Status and Exit Code
