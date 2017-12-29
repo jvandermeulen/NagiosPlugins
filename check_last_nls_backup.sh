@@ -11,6 +11,7 @@
 #               0.7 added help and version info
 #               0.8 oops.. name of backup repository was hardcoded in this script, made it configurable using variable MYREPO
 #               0.9 handle IN_PROGRESS state as UNKNOWN
+#               1.0 Fix NCPA 2.1.x/python issue https://github.com/jvandermeulen/NagiosPlugins/issues/4
 #==================================================
 # Customize this:
 
@@ -28,6 +29,9 @@ CURATOR_TIME_CORRECTION=" +0000"
 # MYREPO: name of repository that should be checked using curator
 MYREPO="SharedBackupRepo"
 
+# https://github.com/jvandermeulen/NagiosPlugins/issues/4
+# work around "Could not find platform independent libraries" error as NCPA 2.1.x sets BASEDIR="/usr/local/ncpa" and export LD_LIBRARY_PATH=$BASEDIR:$PATH
+unset LD_LIBRARY_PATH
 # debug
 #set -x
 # End customizations
@@ -35,7 +39,7 @@ MYREPO="SharedBackupRepo"
 
 function print_version () {
     cat <<EOF
-check_last_nls_backup.sh - 0.9 - Copyright Conclusion Xforce
+check_last_nls_backup.sh - 1.0 - Copyright Conclusion Xforce
 This Nagios plugin comes with no warranty. You can use and distribute it
 under terms of the GNU General Public License Version 2 (GPL V2) or later.
 EOF
