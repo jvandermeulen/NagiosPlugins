@@ -1,0 +1,53 @@
+#!/bin/sh
+#
+# Original author:  oneoffdallas
+# Original URL:     https://github.com/oneoffdallas/pfsense-nagios-checks/blob/master/check_pf_ipsec_tunnel
+# 
+# Conclusion Xforce/Jorgen 2017-12-20: make both name and IP of tunnel visible
+PLUGIN_NAME=check_pf_ipsec_tunnel_altered
+
+
+if [ "$1" = "-e" ] && [ ! -z "$2" ]; then
+
+exitstatus=2 #default
+
+endpoint=$2
+name_instead=$4
+
+
+regex="\b(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\b"
+
+IPTEST=$(echo $endpoint | egrep $regex)
+if [ "$?" -eq 0 ]
+then
+        result=$(/usr/local/sbin/ipsec statusall | grep 'ESTABLISHED' | grep $endpoint | cut -d":" -f2 | cut -d "," -f1 | sed -e 's/^[ \t]*//')||exit 3
+else
+        hostip=$(dig +short $endpoint)
+        result=$(/usr/local/sbin/ipsec statusall | grep 'ESTABLISHED' | grep $hostip | cut -d":" -f2 | cut -d "," -f1 | sed -e 's/^[ \t]*//')||exit 3
+fi
+
+if [ "$name_instead" != "" ]
+  then
+    endpoint="$name_instead ($endpoint)"
+fi
+
+if [ "$result" != "" ]
+  then
+    echo "OK - IPSEC VPN tunnel to $endpoint - $result"
+    exitstatus=0
+else
+    echo "CRITICAL - IPSEC VPN tunnel not found: $endpoint"
+    exitstatus=2
+fi
+
+#echo "exit: $exitstatus"
+exit $exitstatus
+
+else
+        echo "${PLUGIN_NAME} - Nagios Plugin for checking IPSEC tunnel status on pfSense "
+        echo ""
+        echo "Usage:    ${PLUGIN_NAME} -e <remote gateway> [-name instead of IP address]"
+        echo "Note:     must be the same IP or hostname used in IPSEC config"
+        echo "Example:  ${PLUGIN_NAME} -e 4.4.4.4 -name Google"
+        exit 3
+fi
