@@ -3,7 +3,7 @@
 # Purpose:      The need for a script like this arose soon after Red Hat Enterprise Linux switched from upstart to systemd. 
 #               Most of our customers have a Nagios agent called NCPA installed on their CentOS/RHEL servers. 
 #               NCPA is perfectly capable of monitoring upstart/sysV services that should be started or should be stopped, however
-#               NCPA 1.8.1 is not yet able to handle systemd services (version 2.x is on it's way). This script wil loose it reason to exist (for us) when Nagios Enterprises release NCPA (both plugin en Nagios XI wizard) that can handle systemd services.
+#               NCPA 1.8.1 is not yet able to handle systemd services (version 2.x is on it's way). This script may loose its reason for existence (for us) when Nagios Enterprises release NCPA (both plugin en Nagios XI wizard) that can handle systemd services.
 # Author:       Conclusion Xforce
 # Version:      0.1 Jorgen: initial version of check for systemd service (expects one argument)
 # Version:      1.0 Jorgen: production ready
