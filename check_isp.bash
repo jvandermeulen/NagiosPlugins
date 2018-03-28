@@ -1,9 +1,9 @@
 #!/bin/bash
-# Script: 	check_isp.sh
-# Purpose:	Display name of current ISP (according to whois)
-# Version:	0.2
-# Author: 	Conclusion Xforce - Jorgen van der Meulen
-# 
+# Script:       check_isp.sh
+# Purpose:      Display name of current ISP (according to whois)
+# Version:      0.3     whois changed "Your Internet Service Provider" to "Your ISP".
+# Author:       Conclusion Xforce - Jorgen van der Meulen
+#
 WHOIS_URL="https://www.whoismyisp.org"
 
 # Check availability
@@ -30,4 +30,4 @@ case ${HTTP_CODE} in
     ;;
   esac
 
-curl -s ${WHOIS_URL} | awk -F "'"  '/Your Internet Service Provider/ {getline; print $2};'
+curl -s ${WHOIS_URL} | awk '/Your ISP is/ {getline; print $0}' | sed -e 's/<[^>]*>//g'  -e 's/^[ \t]*//'
