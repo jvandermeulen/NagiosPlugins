@@ -1,0 +1,89 @@
+---
+# Ansible Playbook that installs check_yum.py Nagios Plugin including dependencies
+# Suitable for RHEL or CentOS
+
+- hosts: localhost
+  become: true
+#  vars:
+#    proxy_env:
+#      http_proxy: http://192.168.1.1:3128
+#      https_proxy: http://192.168.1.1:3128
+
+
+  tasks:
+
+  - name: download plugin https://github.com/HariSekhon/nagios-plugins/blob/master/check_yum.py
+    get_url:
+      url: https://raw.githubusercontent.com/HariSekhon/nagios-plugins/master/check_yum.py
+      dest: /usr/local/src/check_yum.py
+      mode: 0640
+
+  - name: check for NCPA plugin dir
+    stat:
+      path: /usr/local/ncpa/plugins/
+    register: npca_plugin_dir
+
+
+  - name: copy plugin to NCPA plugin dir
+    copy:
+      src: /usr/local/src/check_yum.py
+      dest: /usr/local/ncpa/plugins/
+      owner: nagios
+      group: nagios
+      mode: u=rwx
+    when: npca_plugin_dir.stat.exists
+
+  - name: download HariSekhonUtils.pm from https://github.com/HariSekhon/lib
+    get_url:
+      url: https://raw.githubusercontent.com/HariSekhon/lib/master/HariSekhonUtils.pm
+      dest: /usr/share/perl5/vendor_perl/
+      mode: 644
+
+  - name: make sure /usr/share/perl5/vendor_perl/resources/ directory exists
+    file:
+      path: /usr/share/perl5/vendor_perl/resources/
+      state: directory
+      owner: root
+      group: root
+      mode: 0755
+
+  - name: install yum rpm deps using yum module
+    yum:
+      name: "{{ rpmdeps }}"
+      state: present
+    vars:
+      rpmdeps:
+      - perl-JSON
+      - perl-TermReadKey
+	  
+  - name: show distro and major version
+    debug:
+      msg: "Debug: ansible_distribution {{ ansible_distribution }} and ansible_distribution_major_version {{ ansible_distribution_major_version }} "
+
+  - name: install yum rpm deps [rhel6] using yum module
+    yum:
+      name: "{{ rpmdeps_el6 }}"
+      state: present
+    vars:
+      rpmdeps_el6:
+      - yum-plugin-security
+    when: ansible_distribution == "CentOS" or ansible_distribution == 'RedHat' and ansible_distribution_major_version <= '7'
+
+  - name: install yum rpm deps [rhel7] using yum module
+    yum:
+      name: "{{ rpmdeps_el7 }}"
+      state: present
+    vars:
+      rpmdeps_el7:
+      - perl-Sys-Syslog
+    when: ansible_distribution == "CentOS" or ansible_distribution == 'RedHat' and ansible_distribution_major_version >= '7'
+
+  - name: run the plugin
+    command: python /usr/local/src/check_yum.py
+    register: check_yum_output
+    failed_when:  check_yum_output.rc >= 3
+
+  - name: show plugin output
+    debug:
+      msg: "{{ check_yum_output.stdout_lines }}"
+    verbosity: 0
