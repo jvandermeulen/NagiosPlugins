@@ -64,10 +64,10 @@
     yum:
       name: "{{ rpmdeps_el6 }}"
       state: present
+    when: (ansible_distribution == "RedHat" or ansible_distribution == "CentOS") and ansible_distribution_major_version == "6"
     vars:
       rpmdeps_el6:
       - yum-plugin-security
-    when: ansible_distribution == "CentOS" or ansible_distribution == 'RedHat' and ansible_distribution_major_version < '7'
 
   - name: install yum rpm deps [rhel7] using yum module
     yum:
@@ -76,7 +76,8 @@
     vars:
       rpmdeps_el7:
       - perl-Sys-Syslog
-    when: ansible_distribution == "CentOS" or ansible_distribution == 'RedHat' and ansible_distribution_major_version >= '7'
+    when: (ansible_distribution == "CentOS" or ansible_distribution == "RedHat") and ansible_distribution_major_version >= '7'
+
 
   - name: run the plugin
     command: python /usr/local/src/check_yum.py
