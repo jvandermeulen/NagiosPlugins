@@ -1,7 +1,8 @@
 #!/bin/bash
 # Check if CentOS/RHEL server needs reboot
 # requirements: yum-utils package
-# version 0.1
+#               el7
+# version 0.2
 set -o pipefail
 /usr/bin/needs-restarting -r > /dev/null 2>&1
 RESULT=$?
