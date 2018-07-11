@@ -9,8 +9,9 @@
 # Requirements:
 #               binary files:   subscription-manager, xargs, awk
 #               config files:   /etc/os-release
-#               authorization:  this script runs as nagios-user, subscription-manager needs sudo rights, please add NOPASSWD line using 'visudo'
+#               authorization:  this script probably runs as nagios-user, subscription-manager needs root privileges that can be adressed by sudo, please add NOPASSWD option using 'visudo' or even better by adding  the line below to a dedicated file in /etc/sudoers.d/
 #               NAGIOSXI ALL = NOPASSWD:/usr/bin/subscription-manager *,/usr/sbin/subscription-manager *
+# Updating from Nagios XI 5.4.13 to 5.5.0 wiped /etc/sudoers entries, so be warned!
 #
 STATE_OK=0
 STATE_WARN=1
@@ -24,9 +25,7 @@ CMD_PROXY_OPTS=""
 
 #set -x
 set -o pipefail
-
 #
-
 
 #Check if subscription-manager is installed (on CentOS and OEL it's NOT)
 type ${CMD} >/dev/null 2>&1 || { echo >&2 "UNKNOWN: no ${CMD} binary found on $(awk -F \= 'NR == 1 {print $2}' /etc/os-release)."; exit 3; }
