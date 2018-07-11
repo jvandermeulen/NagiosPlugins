@@ -6,12 +6,14 @@
 #               0.2 Jorgen: run sudo with "-A" option to make sure a failure is returned instead of infinite waiting for user password when sudoers is not edited              
 #               sudo: no askpass program specified, try setting SUDO_ASKPASS
 #               0.3 Jorgen: added ${CMD_FULL} var. Full path the subscription-manager binary under /usr/bin/ keeps returning old info (caching?)
+#               0.4 Jorgen: suggested to create a seperate file in /etc/sudoers.d/ as Nagios XI upgrade might wipe your own sudo lines
 # Requirements:
 #               binary files:   subscription-manager, xargs, awk
 #               config files:   /etc/os-release
 #               authorization:  this script probably runs as nagios-user, subscription-manager needs root privileges that can be adressed by sudo, please add NOPASSWD option using 'visudo' or even better by adding  the line below to a dedicated file in /etc/sudoers.d/
 #               NAGIOSXI ALL = NOPASSWD:/usr/bin/subscription-manager *,/usr/sbin/subscription-manager *
-# Updating from Nagios XI 5.4.13 to 5.5.0 wiped /etc/sudoers entries, so be warned!
+#
+#               Updating from Nagios XI 5.4.13 to 5.5.0 wiped my/etc/sudoers entries, so be warned and use a seperate file.
 #
 STATE_OK=0
 STATE_WARN=1
