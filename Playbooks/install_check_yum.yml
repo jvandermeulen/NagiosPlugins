@@ -18,7 +18,7 @@
     get_url:
       url: https://raw.githubusercontent.com/HariSekhon/nagios-plugins/master/check_yum.py
       dest: /usr/local/src/check_yum.py
-      mode: 0640
+      mode: 0644
 
   - name: check for NCPA plugin dir
     stat:
