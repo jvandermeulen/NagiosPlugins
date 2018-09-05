@@ -2,13 +2,13 @@
 # Ansible Playbook that installs check_yum.py Nagios Plugin including dependencies
 # Suitable for RHEL or CentOS
 
-- hosts: localhost
+- hosts: localhost    # if you set this to another host or set of hosts also uncomment some options at the copy task in order to let it work on remote hosts
   become: true
-#  vars:
-#    proxy_env:
-#      http_proxy: http://192.168.1.1:3128
-#      https_proxy: http://192.168.1.1:3128
+#  environment:
+#    http_proxy: http://192.168.1.1:3128
+#    https_proxy: http://proxyuser:proxypass@192.168.1.2:80
 
+# Note: this did not work in my environment for get_url task:  vars:\n  proxy_env:\n    http_proxy: http://192.168.1.1
 
   tasks:
 
@@ -31,6 +31,9 @@
       owner: nagios
       group: nagios
       mode: u=rwx
+      #mode: preserve
+      #remote_src: yes           # uncomment this if your host is NOT set to 'localhost'
+
     when: npca_plugin_dir.stat.exists
 
   - name: download HariSekhonUtils.pm from https://github.com/HariSekhon/lib
@@ -78,13 +81,13 @@
       - perl-Sys-Syslog
     when: (ansible_distribution == "CentOS" or ansible_distribution == "RedHat") and ansible_distribution_major_version >= '7'
 
-
   - name: run the plugin
     command: python /usr/local/src/check_yum.py
     register: check_yum_output
-    failed_when:  check_yum_output.rc >= 3
+    failed_when: check_yum_output.rc >= 3
+    changed_when: false
 
   - name: show plugin output
     debug:
       msg: "{{ check_yum_output.stdout_lines }}"
-    verbosity: 0
+    
