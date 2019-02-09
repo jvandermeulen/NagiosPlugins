@@ -13,6 +13,6 @@ elif [[ ${RESULT} -eq 0 ]]; then
         echo "OK: No system reboot required"
         exit 0
 else
-        echo "UNKNOWN: $0 failed (is yum-utils installed?)"
+        echo "UNKNOWN: $0 failed (is yum-utils installed? are you running el7 or newer?)"
         exit 3
 fi
