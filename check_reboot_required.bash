@@ -7,7 +7,7 @@ set -o pipefail
 /usr/bin/needs-restarting -r > /dev/null 2>&1
 RESULT=$?
 if [[ ${RESULT} -eq 1 ]]; then
-        echo -e "WARNING: Reboot is required. Updated libraries, service or kernel detected\nSee Red Hat article https://access.redhat.com/solutions/27943"
+        echo -e "WARNING: Reboot is required. At least one updated library, service or kernel detected\nSee Red Hat article https://access.redhat.com/solutions/27943"
         exit 1
 elif [[ ${RESULT} -eq 0 ]]; then
         echo "OK: No system reboot required"
