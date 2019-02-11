@@ -5,7 +5,7 @@
 - hosts: localhost
   vars:
     tmpdir: /tmp
-    mountname: /boot
+    nagiosroot: /usr/local/nagios/
     ensure_download: true
 
 # Note: this did not work in my environment for get_url task:  vars:\n  proxy_env:\n    http_proxy: http://192.168.1.1
@@ -23,6 +23,9 @@
     file:
       path: /store/backups/nagiosxi
       state: directory
+
+  - name: Ensure nagios preflight check runs fine
+    command: "{{ nagiosroot }}/bin/nagios -v {{ nagiosroot }}/etc/nagios.cfg"
 
   - name: Ensure free space is available on filesystems (gt 15%)
     assert:
