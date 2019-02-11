@@ -1,0 +1,59 @@
+---
+# Ansible Playbook for Updating Nagios XI
+# Suitable for RHEL7, fact gathering is required to run this playbook
+
+- hosts: localhost
+  vars:
+    tmpdir: /tmp
+    mountname: /boot
+    ensure_download: true
+
+# Note: this did not work in my environment for get_url task:  vars:\n  proxy_env:\n    http_proxy: http://192.168.1.1
+
+  tasks:
+  - name: Ensure old nagiosxi directories from {{ tmpdir }} are removed
+    file:
+      path: "{{ item }}"
+      state: absent
+    with_items:
+      - "{{ tmpdir }}/nagiosxi"
+      - "{{ tmpdir }}/xi-latest.tar.gz"
+
+  - name: Ensure recent backup is available (TODO determine recent file)
+    file:
+      path: /store/backups/nagiosxi
+      state: directory
+
+  - name: Ensure free space is available on filesystems (gt 15%)
+    assert:
+      that:
+        - mount.size_available > mount.size_total| float * 0.15
+      msg: Used disk space reached 85% threshold for {{ mount.mount }}
+    vars:
+      mount: "{{ ansible_mounts | selectattr('mount','equalto',item.mount) | list | first }}" # equal to may require  pip install Jinja2 -U
+    with_items:
+      - "{{ ansible_mounts }}"
+
+  - name: Download XI latest
+    get_url:
+      url: https://assets.nagios.com/downloads/nagiosxi/xi-latest.tar.gz
+      dest: "{{ tmpdir }}/xi-latest.tar.gz"
+      force: yes
+    when: ensure_download
+
+  - name: Unzip XI tarball
+    unarchive:
+      src: "{{ tmpdir }}/xi-latest.tar.gz"
+      dest: "{{ tmpdir }}/"
+      remote_src: True
+
+  - name: Run upgrade
+    command: ./upgrade
+    args:
+      chdir: "{{ tmpdir }}/nagiosxi"
+    register: upgrade_out
+
+  - name: Display results from upgrade script
+    debug:
+      var: upgrade_out
+      verbosity: 1
