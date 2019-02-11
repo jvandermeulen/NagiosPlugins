@@ -36,6 +36,15 @@
       #remote_src: yes           # uncomment this if your host is NOT set to 'localhost'
     when: npca_plugin_dir.stat.exists
 
+  - name: install yum rpm deps using yum module
+    yum:
+      name: "{{ rpmdeps }}"
+      state: present
+    vars:
+      rpmdeps:
+      - perl-JSON
+      - perl-TermReadKey
+
   - name: download HariSekhonUtils.pm from https://github.com/HariSekhon/lib
     get_url:
       url: https://raw.githubusercontent.com/HariSekhon/lib/master/HariSekhonUtils.pm
@@ -49,15 +58,6 @@
       owner: root
       group: root
       mode: 0755
-
-  - name: install yum rpm deps using yum module
-    yum:
-      name: "{{ rpmdeps }}"
-      state: present
-    vars:
-      rpmdeps:
-      - perl-JSON
-      - perl-TermReadKey
 
   - name: show distro and major version
     debug:
