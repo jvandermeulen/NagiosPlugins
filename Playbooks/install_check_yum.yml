@@ -2,11 +2,17 @@
 # Ansible Playbook that installs check_yum.py Nagios Plugin including dependencies
 # Suitable for RHEL or CentOS
 
-- hosts: localhost    # if you set this to another host or set of hosts also uncomment some options at the copy task in order to let it work on remote hosts
+- hosts: localhost    # if you set this to a remote host(s) (not localhost) please uncomment some options at the copy task in order to let it work correctly
   become: true
   vars:
-    rpmdeps_el7:
+    also_resolve_perl_dependencies: false 
+    rpmdeps_el_perl:
+    - perl-JSON
+    - perl-TermReadKey
+    rpmdeps_el7_perl:
     - perl-Sys-Syslog
+    rpmdeps_el6:
+    - yum-plugin-security
 #  environment:
 #    http_proxy: http://192.168.1.1:3128
 #    https_proxy: http://proxyuser:proxypass@192.168.1.2:80
@@ -38,18 +44,16 @@
 
   - name: install yum rpm deps using yum module
     yum:
-      name: "{{ rpmdeps }}"
+      name: "{{ rpmdeps_el_perl }}"
       state: present
-    vars:
-      rpmdeps:
-      - perl-JSON
-      - perl-TermReadKey
+    when: also_resolve_perl_dependencies
 
   - name: download HariSekhonUtils.pm from https://github.com/HariSekhon/lib
     get_url:
       url: https://raw.githubusercontent.com/HariSekhon/lib/master/HariSekhonUtils.pm
       dest: /usr/share/perl5/vendor_perl/
       mode: 644
+    when: also_resolve_perl_dependencies
 
   - name: make sure /usr/share/perl5/vendor_perl/resources/ directory exists
     file:
@@ -58,6 +62,7 @@
       owner: root
       group: root
       mode: 0755
+    when: also_resolve_perl_dependencies
 
   - name: show distro and major version
     debug:
@@ -68,15 +73,12 @@
       name: "{{ rpmdeps_el6 }}"
       state: present
     when: (ansible_distribution == "RedHat" or ansible_distribution == "CentOS") and ansible_distribution_major_version == "6"
-    vars:
-      rpmdeps_el6:
-      - yum-plugin-security
 
   - name: install yum rpm deps [rhel7] using yum module
     yum:
-      name: "{{ rpmdeps_el7 }}"
+      name: "{{ rpmdeps_el7_perl }}"
       state: present
-    when: (ansible_distribution == "CentOS" or ansible_distribution == "RedHat") and ansible_distribution_major_version >= '7'
+    when: (ansible_distribution == "CentOS" or ansible_distribution == "RedHat") and ansible_distribution_major_version >= '7' and also_resolve_perl_dependencies
 
   - name: run the plugin
     command: python /usr/local/src/check_yum.py
