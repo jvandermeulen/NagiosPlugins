@@ -23,6 +23,7 @@
     file:
       path: /store/backups/nagiosxi
       state: directory
+      #ansible localhost -m find -a 'path=/store/backups/nagiosxi patterns="nagiosxi*.tar.gz" age=-25h size=5M'
 
   - name: Ensure nagios preflight check runs fine
     command: "{{ nagiosroot }}/bin/nagios -v {{ nagiosroot }}/etc/nagios.cfg"
