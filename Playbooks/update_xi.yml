@@ -13,6 +13,27 @@
     xi_version_file: /usr/local/nagiosxi/var/xiversion
 
   tasks:
+
+  - name: Show current XI version
+    debug: 
+      msg: "Current version is {{lookup('file', '{{ xi_version_file }}') }}"
+
+  - name: Perform Product Update check
+    debug: 
+      msg: "Current version is {{lookup('file', '{{ xi_version_file }}') }}"
+      # https://www.nagios.com/checkforupdates/?product=nagiosxi&version=5.5.10
+      # Your installation of Nagios XI (5.5.10) is up-to-date, so no upgrade is required. The latest version of Nagios XI is 5.5.10, which was released on 2019-02-12.
+      # 
+      # https://www.nagios.com/checkforupdates/?product=nagiosxi&version=5.5.9
+      # An Update Is Available!
+      #
+      # Your installation of Nagios XI 5.5.9 is outdated and should be upgraded. The latest version of Nagios XI is 5.5.10, which was released on 2019-02-12
+
+  - name: Ensure backup dir is available
+    file:
+      path: /store/backups/nagiosxi
+      state: directory
+
   - name: Ensure old nagiosxi directories from {{ tmpdir }} are removed
     file:
       path: "{{ item }}"
@@ -20,15 +41,6 @@
     with_items:
       - "{{ tmpdir }}/nagiosxi"
       - "{{ tmpdir }}/xi-latest.tar.gz"
-
-  - name: Ensure backup dir is available
-    file:
-      path: /store/backups/nagiosxi
-      state: directory
-
-  - name: Show current XI version
-    debug: 
-      msg: "Current version is {{lookup('file', '{{ xi_version_file }}') }}"
 
   - name: "Find backups within last {{ xibackup_lookback_period }}"
     find:
