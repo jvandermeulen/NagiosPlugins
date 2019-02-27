@@ -3,12 +3,14 @@
 # Suitable for RHEL7, fact gathering is required to run this playbook
 
 - hosts: localhost
+  become: true
   vars:
     tmpdir: /tmp
-    nagiosroot: /usr/local/nagios/
+    nagiosroot: /usr/local/nagios
     ensure_download: true
-
-# Note: this did not work in my environment for get_url task:  vars:\n  proxy_env:\n    http_proxy: http://192.168.1.1
+    xibackup_lookback_period: "25h"
+    xibackup_minimum_size: "200M"
+    xi_version_file: /usr/local/nagiosxi/var/xiversion
 
   tasks:
   - name: Ensure old nagiosxi directories from {{ tmpdir }} are removed
@@ -19,11 +21,29 @@
       - "{{ tmpdir }}/nagiosxi"
       - "{{ tmpdir }}/xi-latest.tar.gz"
 
-  - name: Ensure recent backup is available (TODO determine recent file)
+  - name: Ensure backup dir is available
     file:
       path: /store/backups/nagiosxi
       state: directory
-      #ansible localhost -m find -a 'path=/store/backups/nagiosxi patterns="nagiosxi*.tar.gz" age=-25h size=5M'
+
+  - name: Show current XI version
+    debug: 
+      msg: "Current version is {{lookup('file', '{{ xi_version_file }}') }}"
+
+  - name: "Find backups within last {{ xibackup_lookback_period }}"
+    find:
+      path: "/store/backups/nagiosxi"
+      patterns: "nagiosxi*.tar.gz"
+      age: "-{{ xibackup_lookback_period }}"
+      size: "{{ xibackup_minimum_size }}"
+    register: xibackups
+    #ansible localhost -m find -a 'path=/store/backups/nagiosxi patterns="nagiosxi*.tar.gz" age=-25h size=5M'
+    
+  - name:  Ensure recent backup is available
+    assert:
+      that:
+        - xibackups.matched > 0
+      msg: "No XI backup files found with last {{ xibackup_lookback_period }} with a minimum size of {{ xibackup_minimum_size }}."
 
   - name: Ensure nagios preflight check runs fine
     command: "{{ nagiosroot }}/bin/nagios -v {{ nagiosroot }}/etc/nagios.cfg"
@@ -34,9 +54,10 @@
         - mount.size_available > mount.size_total| float * 0.15
       msg: Used disk space reached 85% threshold for {{ mount.mount }}
     vars:
-      mount: "{{ ansible_mounts | selectattr('mount','equalto',item.mount) | list | first }}" # equal to may require  pip install Jinja2 -U
+      mount: "{{ ansible_mounts | selectattr('mount','equalto',item.mount) | list | first }}" # equalto may require  pip install Jinja2 -U
     with_items:
       - "{{ ansible_mounts }}"
+    register: free_space_all
 
   - name: Download XI latest
     get_url:
@@ -44,6 +65,7 @@
       dest: "{{ tmpdir }}/xi-latest.tar.gz"
       force: yes
     when: ensure_download
+    become: false    # quick workaround to read possible proxy settings from current user
 
   - name: Unzip XI tarball
     unarchive:
