@@ -11,26 +11,27 @@
     ensure_download: true
     xibackup_lookback_period: "25h"
     xibackup_minimum_size: "200M"
-    #xi_version_file: /usr/local/nagiosxi/var/xiversion
-    xi_version_file: /tmp/xiversion
+    xi_version_file: /usr/local/nagiosxi/var/xiversion
+    #xi_version_file: /tmp/xiversion
 
   tasks:
   - name: Load current Nagios XI version
     set_fact: 
       xi_version_full: "{{ lookup('ini', 'full type=properties file={{ xi_version_file }}') }}"
 
-  ## The conditional check fails on ansible-2.7.8-1 when using set_fact
-  #- name: Load upgrade results check from www.nagios.com/checkforupdates
-  #  set_fact:
-  #    update_check_res: "{{ lookup('url', 'https://www.nagios.com/checkforupdates/?product=nagiosxi&version={{ xi_version_full }}') }}"
-  #
   - name: Show current XI version of current installation
     debug:
       msg: "Currently installed XI version is {{ xi_version_full }}"
 
+  ## The conditional check fails on ansible-2.7.8-1 when using set_fact. Version 2.7.5 was OK. So let's use module debug
+  #- name: Load upgrade results check from www.nagios.com/checkforupdates
+  #  set_fact:
+  #    update_check_res: "{{ lookup('url', 'https://www.nagios.com/checkforupdates/?product=nagiosxi&version={{ xi_version_full }}') }}"
+  
   - name: Load upgrade results check from www.nagios.com/checkforupdates
     debug:
-      msg: "{{ lookup('url', 'https://www.nagios.com/checkforupdates/?product=nagiosxi&version={{ xi_version_full }}') }}"
+      #msg: "{{ lookup('url', 'https://www.nagios.com/checkforupdates/?product=nagiosxi&version={{ xi_version_full }}') }}"
+      msg: "{{ lookup('url', 'https://www.nagios.com/checkforupdates/?product=nagiosxi&version={{ xi_version_full }}',split_lines=True) }}"
     register: update_check_res
 
   - name: Debug - Show upgrade check results 
@@ -53,7 +54,7 @@
   - name:  Determine if upgrade is necessary
     assert:
       that:
-        - "'is up-to-date, so no upgrade is required' in update_check_res.msg"
+        - "'is up-to-date, so no upgrade is required' not in update_check_res.msg"
       success_msg: "Upgrade available and necessary. Continuing playbook"
       fail_msg: "No upgrade necessary. Stopping playbook"
 
