@@ -5,14 +5,15 @@
 - hosts: localhost
   become: true
   vars:
-    do_upgrade: false
+    do_upgrade: true
+    do_size_check: true
     tmpdir: /tmp
     nagiosroot: /usr/local/nagios
     ensure_download: true
     xibackup_lookback_period: "25h"
     xibackup_minimum_size: "200M"
-    xi_version_file: /usr/local/nagiosxi/var/xiversion
-    #xi_version_file: /tmp/xiversion
+#    xi_version_file: /usr/local/nagiosxi/var/xiversion
+    xi_version_file: /tmp/xiversion
 
   tasks:
   - name: Load current Nagios XI version
@@ -99,6 +100,7 @@
     with_items:
       - "{{ ansible_mounts }}"
     register: free_space_all
+    when: do_size_check
 
   - name: Download XI latest
     get_url:
@@ -114,14 +116,15 @@
       dest: "{{ tmpdir }}/"
       remote_src: True
 
-  - name: Run upgrade
-    command: ./upgrade
-    args:
-      chdir: "{{ tmpdir }}/nagiosxi"
-    register: upgrade_out
-    when: do_upgrade
+  - block: 
+    - name: Run upgrade
+      command: ./upgrade
+      args:
+        chdir: "{{ tmpdir }}/nagiosxi"
+      register: upgrade_out
 
-  - name: Display results from upgrade script
-    debug:
-      var: upgrade_out
-      verbosity: 1
+    - name: Display results from upgrade script
+      debug:
+        var: upgrade_out
+        verbosity: 0
+    when: do_upgrade
