@@ -5,14 +5,58 @@
 - hosts: localhost
   become: true
   vars:
+    do_upgrade: false
     tmpdir: /tmp
     nagiosroot: /usr/local/nagios
     ensure_download: true
     xibackup_lookback_period: "25h"
     xibackup_minimum_size: "200M"
-    xi_version_file: /usr/local/nagiosxi/var/xiversion
+    #xi_version_file: /usr/local/nagiosxi/var/xiversion
+    xi_version_file: /tmp/xiversion
 
   tasks:
+  - name: Load current Nagios XI version
+    set_fact: 
+      xi_version_full: "{{ lookup('ini', 'full type=properties file={{ xi_version_file }}') }}"
+
+  ## The conditional check fails on ansible-2.7.8-1 when using set_fact
+  #- name: Load upgrade results check from www.nagios.com/checkforupdates
+  #  set_fact:
+  #    update_check_res: "{{ lookup('url', 'https://www.nagios.com/checkforupdates/?product=nagiosxi&version={{ xi_version_full }}') }}"
+  #
+  - name: Show current XI version of current installation
+    debug:
+      msg: "Currently installed XI version is {{ xi_version_full }}"
+
+  - name: Load upgrade results check from www.nagios.com/checkforupdates
+    debug:
+      msg: "{{ lookup('url', 'https://www.nagios.com/checkforupdates/?product=nagiosxi&version={{ xi_version_full }}') }}"
+    register: update_check_res
+
+  - name: Debug - Show upgrade check results 
+    debug:
+      var: update_check_res
+      verbosity: 1
+      
+      # Example output from www.nagios.com/checkforupdates
+      #
+      # Case 1: up to date
+      # https://www.nagios.com/checkforupdates/?product=nagiosxi&version=5.5.10
+      # Your installation of Nagios XI (5.5.10) is up-to-date, so no upgrade is required. The latest version of Nagios XI is 5.5.10, which was released on 2019-02-12.
+      # 
+      # Case 2: outdated
+      # https://www.nagios.com/checkforupdates/?product=nagiosxi&version=5.5.9
+      # An Update Is Available!
+      #
+      # Your installation of Nagios XI 5.5.9 is outdated and should be upgraded. The latest version of Nagios XI is 5.5.10, which was released on 2019-02-12
+
+  - name:  Determine if upgrade is necessary
+    assert:
+      that:
+        - "'is up-to-date, so no upgrade is required' in update_check_res.msg"
+      success_msg: "Upgrade available and necessary. Continuing playbook"
+      fail_msg: "No upgrade necessary. Stopping playbook"
+
   - name: Ensure old nagiosxi directories from {{ tmpdir }} are removed
     file:
       path: "{{ item }}"
@@ -25,10 +69,6 @@
     file:
       path: /store/backups/nagiosxi
       state: directory
-
-  - name: Show current XI version
-    debug: 
-      msg: "Current version is {{lookup('file', '{{ xi_version_file }}') }}"
 
   - name: "Find backups within last {{ xibackup_lookback_period }}"
     find:
@@ -78,6 +118,7 @@
     args:
       chdir: "{{ tmpdir }}/nagiosxi"
     register: upgrade_out
+    when: do_upgrade
 
   - name: Display results from upgrade script
     debug:
