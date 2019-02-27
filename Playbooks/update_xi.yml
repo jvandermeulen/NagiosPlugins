@@ -3,9 +3,10 @@
 # Suitable for RHEL7, fact gathering is required to run this playbook
 
 - hosts: localhost
+  become: true
   vars:
     tmpdir: /tmp
-    nagiosroot: /usr/local/nagios/
+    nagiosroot: /usr/local/nagios
     ensure_download: true
     xibackup_lookback_period: "25h"
     xibackup_minimum_size: "200M"
@@ -64,6 +65,7 @@
       dest: "{{ tmpdir }}/xi-latest.tar.gz"
       force: yes
     when: ensure_download
+    become: false    # quick workaround to read possible proxy settings from current user
 
   - name: Unzip XI tarball
     unarchive:
