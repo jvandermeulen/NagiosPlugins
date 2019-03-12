@@ -2,6 +2,10 @@
 # Ansible Playbook for Updating Nagios XI
 # Suitable for RHEL7, fact gathering is required to run this playbook
 
+# You might want to update  Jinja2 on Ansible <= v2.7.5 using `pip install Jinja2 -U`. Ansible package 2.8 should be ok (not yet released)
+# An exception occurred during task execution. To see the full traceback, use -vvv. The error was: TemplateRuntimeError: no test named 'equalto'
+# fatal: [localhost]: FAILED! => {"msg": "Unexpected failure during module execution.", "stdout": ""}
+
 - hosts: localhost
   become: true
   vars:
