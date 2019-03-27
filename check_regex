@@ -1,0 +1,192 @@
+#! /usr/bin/perl -wT
+
+# check_regex, rik.de.deken@vanderlet.nl (C) Vanderlet BV
+# Deze software mag vrijelijk worden gebruikt, aangepast of vermenigvuldigd
+# onder de voorwaarden van de General Public License.
+# Vanderlet BV biedt geen ondersteuning bij gebruik van deze plugin.
+# Het gebruik van deze software is voor eigen risico.
+
+# zie usage() voor toepassingen en gebruik
+# gebruik check_regex -h voor hulp
+
+# 20070315, rdn: script geschreven
+# 20080318, rdn: script opgenomen in vdl-nagios-plugins
+
+use strict;
+use Getopt::Long;
+use vars qw($opt_V $opt_h $opt_i $opt_q $opt_w $opt_c $PROGNAME);
+use lib "/usr/local/nagios/libexec"  ;
+use lib "."  ;
+use utils qw(%ERRORS &print_revision &support &usage);
+$PROGNAME = "check_regex";
+
+sub print_help ();
+sub print_usage ();
+$ENV{'PATH'}='';
+$ENV{'BASH_ENV'}='';
+$ENV{'ENV'}='';
+my $print_perf = 1 ;
+my $print_match = 1 ;
+my $eenheid = "";
+my ($minwarn, $maxwarn, $mincrit, $maxcrit);
+
+# invert %ERRORS
+my %SRORRE ;
+foreach my $k (keys %ERRORS) {
+   $SRORRE{$ERRORS{$k}} = $k ;
+}
+
+Getopt::Long::Configure('bundling');
+GetOptions
+        ("V"   => \$opt_V, "version"    => \$opt_V,
+         "h"   => \$opt_h, "help"       => \$opt_h,
+         "i"   => \$opt_i, "ignorecase" => \$opt_i,
+         "q=s" => \$opt_q, "query=s"    => \$opt_q,
+         "w=s" => \$opt_w, "warning=s"  => \$opt_w,
+         "c=s" => \$opt_c, "critical=s" => \$opt_c);
+if ($opt_V) {
+        print_revision($PROGNAME,'1.0 $');
+        exit $ERRORS{'OK'};
+}
+
+if ($opt_h) {print_help(); exit $ERRORS{'OK'};}
+
+# TODO controleer de query string waarom gevraagd wordt
+
+
+# opgepast: het script controleert niet of warning levels hoger/lager zijn dan critical levels!
+#  of zelfs maar of de minimum onder de maximum ligt!
+if (defined $opt_w) {
+   $maxwarn = $1 if ($opt_w =~ /([\-\+]?\d+)/ );
+   ($minwarn, $maxwarn) = ($1, $2) if ($opt_w =~ /([\-\+]?\d*)\:([\-\+]?\d*)/ );
+}
+
+if (defined $opt_c) {
+   $maxcrit = $1 if ($opt_c =~ /([\-\+]?\d+)/ );
+   ($mincrit, $maxcrit) = ($1, $2) if ($opt_c =~ /([\-\+]?\d*)\:([\-\+]?\d*)/ );
+}
+my $query = $1 if $opt_q =~ /(.+)/;
+
+my $state = $ERRORS{OK};
+#my $min = 2 ** 31 ;
+#my $max = - $min;
+
+$opt_i ||= '';
+$query ||= '.';
+
+my @matched_lines;
+my @matches;
+
+while (<>) {
+   chomp ;
+   next if /^\s*$/;
+   if (/($query)/) {
+      my $match_line = $_ ;
+      my $match = $1;
+    #print "dd $match_line\n dd $match\n";
+      push @matched_lines, $match_line;
+      push @matches, $match;
+   }
+}
+
+my $aantal_matches = $#matched_lines + 1 ;
+my $laatste_match = $matched_lines[-1] || "";
+
+#print "dd aantal matches \/$query\/ = $aantal_matches\n";
+
+my $drempel_min;
+my $drempel_max;
+my $min = $aantal_matches;
+my $max = $aantal_matches;
+
+# vergelijk alleen met een threshold, indien er eentje werd opgegeven
+if (defined $minwarn and $minwarn =~ /\d+/) {
+   $drempel_min = " (>= $minwarn)";
+   if ($min < $minwarn) {
+      $state = $ERRORS{WARNING};
+      $drempel_min = " (< $minwarn!)";
+   }
+}
+if (defined $maxwarn and $maxwarn =~ /\d+/) {
+   $drempel_max = " (<= $maxwarn)";
+   if ($max > $maxwarn) {
+      $state = $ERRORS{WARNING};
+      $drempel_max = " (> $maxwarn!)";
+   }
+}
+
+# een critical is altijd erger dan een warning, dus prevaleert deze $state over de vorige
+if (defined $mincrit and $mincrit =~ /\d+/) {
+   $drempel_min ||= " (>= $mincrit)";
+   if ($min < $mincrit) {
+      $state = $ERRORS{CRITICAL};
+      $drempel_min = " (< $mincrit!!)";
+   }
+}
+if (defined $maxcrit and $maxcrit =~ /\d+/) {
+   $drempel_max ||= " (<= $maxcrit)";
+   if ($max > $maxcrit) {
+      $state = $ERRORS{CRITICAL};
+      $drempel_max = " (> $maxcrit!!)";
+   }
+}
+#$drempel_min ||= " ()";
+#$drempel_max ||= " ()";
+
+# afdrukken standaard plugin output
+print "$SRORRE{$state}: aantal matches ";
+
+print "$aantal_matches$drempel_min " if defined $drempel_min;
+print "$aantal_matches$drempel_max " if defined $drempel_max;
+
+if ($print_match) {
+   if ($laatste_match =~ /.+/) {
+      print  "\"$laatste_match\"" ;
+   } else {
+      print "\"$query\"";
+   }
+}
+
+# onderstaande performance data alleen afdrukken indien dat zo is geconfigureerd (hierboven in script)
+if ($print_perf) {
+   # indien een threshold niet was aangevraagd, initialiseren we hem hier pas met een lege string
+   $minwarn ||= "";
+   $maxwarn ||= "";
+   $mincrit ||= "";
+   $maxcrit ||= "";
+   print "|query_matches=${max};$minwarn:$maxwarn;$mincrit:$maxcrit;$min;$max";
+}
+print "\n";
+
+exit $state;
+
+
+
+
+sub print_usage () {
+   print "Gebruik: $PROGNAME -q query [-w warn] [-c crit]
+   warn = bereik of maximum aantal queries
+   crit = bereik of maximum aantal queries
+";
+}
+
+sub print_help () {
+   print_revision($PROGNAME,'1.0 $');
+   print "
+   Copyright (c) Rik de Deken, VanderLet BV Nederland
+   Deze plugin leest stdin en beoordeelt hoevaak de query string voorkomt.
+
+";
+   print_usage();
+   print "
+   Voorbeeld: dmesg - | $PROGNAME -q \"vx_nospace\" -w2:4 -c0:10
+   geeft warning indien de string vx_nospace minder dan tweemaal of meer dan
+   viermaal voorkomt in de output van dmesg
+   geeft critical indien de string vx_nospace minder dan nulmaal (?) of meer dan
+   tienmaal voorkomt.
+
+   NB: $PROGNAME controleert dus niet of de thresholds zinnig zijn.
+
+";
+#   support();
+}
