@@ -2,9 +2,8 @@
 # Ansible Playbook for Updating Nagios XI
 # Suitable for RHEL7, fact gathering is required to run this playbook
 
-# You might want to update  Jinja2 on Ansible <= v2.7.5 using `pip install Jinja2 -U`. Ansible package 2.8 should be ok (not yet released)
-# An exception occurred during task execution. To see the full traceback, use -vvv. The error was: TemplateRuntimeError: no test named 'equalto'
-# fatal: [localhost]: FAILED! => {"msg": "Unexpected failure during module execution.", "stdout": ""}
+# Changes: 
+# 20190508 JvdM/AB: Got rid of equalto comparison in filesystem check, improved visual output
 
 - hosts: localhost
   become: true
@@ -13,14 +12,13 @@
     do_size_check: true
     tmpdir: /tmp
     nagiosroot: /usr/local/nagios
-    ensure_download: true
     xibackup_lookback_period: "25h"
     xibackup_minimum_size: "200M"
     xi_version_file: /usr/local/nagiosxi/var/xiversion
 
   tasks:
   - name: Load current Nagios XI version
-    set_fact: 
+    set_fact:
       xi_version_full: "{{ lookup('ini', 'full type=properties file={{ xi_version_file }}') }}"
 
   - name: Show current XI version of current installation
@@ -31,24 +29,22 @@
   #- name: Load upgrade results check from www.nagios.com/checkforupdates
   #  set_fact:
   #    update_check_res: "{{ lookup('url', 'https://www.nagios.com/checkforupdates/?product=nagiosxi&version={{ xi_version_full }}') }}"
-  
-  - name: Load upgrade results check from www.nagios.com/checkforupdates
-    debug:
-      #msg: "{{ lookup('url', 'https://www.nagios.com/checkforupdates/?product=nagiosxi&version={{ xi_version_full }}') }}"
-      msg: "{{ lookup('url', 'https://www.nagios.com/checkforupdates/?product=nagiosxi&version={{ xi_version_full }}',split_lines=True) }}"
-    register: update_check_res
 
-  - name: Debug - Show upgrade check results 
+  - name: Load upgrade results check from www.nagios.com/checkforupdates
+    set_fact:
+      update_check_res: "{{ lookup('url', 'https://www.nagios.com/checkforupdates/?product=nagiosxi&version={{ xi_version_full }}',split_lines=True) }}"
+
+  - name: Debug - Show upgrade check results
     debug:
       var: update_check_res
       verbosity: 1
-      
+
       # Example output from www.nagios.com/checkforupdates
       #
       # Case 1: up to date
       # https://www.nagios.com/checkforupdates/?product=nagiosxi&version=5.5.10
       # Your installation of Nagios XI (5.5.10) is up-to-date, so no upgrade is required. The latest version of Nagios XI is 5.5.10, which was released on 2019-02-12.
-      # 
+      #
       # Case 2: outdated
       # https://www.nagios.com/checkforupdates/?product=nagiosxi&version=5.5.9
       # An Update Is Available!
@@ -58,7 +54,7 @@
   - name:  Determine if upgrade is necessary
     assert:
       that:
-        - "'is up-to-date, so no upgrade is required' not in update_check_res.msg"
+        - "'is up-to-date, so no upgrade is required' not in update_check_res"
       success_msg: "Upgrade available and necessary. Continuing playbook"
       fail_msg: "No upgrade necessary. Stopping playbook"
 
@@ -83,7 +79,7 @@
       size: "{{ xibackup_minimum_size }}"
     register: xibackups
     #ansible localhost -m find -a 'path=/store/backups/nagiosxi patterns="nagiosxi*.tar.gz" age=-25h size=5M'
-    
+
   - name:  Ensure recent backup is available
     assert:
       that:
@@ -96,38 +92,40 @@
   - name: Ensure free space is available on filesystems (gt 15%)
     assert:
       that:
-        - mount.size_available > mount.size_total| float * 0.15
-      msg: Used disk space reached 85% threshold for {{ mount.mount }}
-    vars:
-      mount: "{{ ansible_mounts | selectattr('mount','equalto',item.mount) | list | first }}" # equalto may require  pip install Jinja2 -U
-    with_items:
-      - "{{ ansible_mounts }}"
-    register: free_space_all
+        - item.size_available > item.size_total| float * 0.15
+      fail_msg: "{{ item.mount }} has less than 15% free space! Aborting playbook."
+      success_msg: "{{ item.mount }} has enough free space: Continue"
+    loop:
+      "{{ ansible_mounts }}"
+    loop_control:
+      label: "{{ item.mount }}"
     when: do_size_check
 
-  - name: Download XI latest
-    get_url:
-      url: https://assets.nagios.com/downloads/nagiosxi/xi-latest.tar.gz
-      dest: "{{ tmpdir }}/xi-latest.tar.gz"
-      force: yes
-    when: ensure_download
-    become: false    # quick workaround to read possible proxy settings from current user
+  - block:
+    - name: Download XI latest
+      get_url:
+        url: https://assets.nagios.com/downloads/nagiosxi/xi-latest.tar.gz
+        dest: "{{ tmpdir }}/xi-latest.tar.gz"
+        force: yes
+      become: false    # quick workaround to read possible proxy settings from current user
 
-  - name: Unzip XI tarball
-    unarchive:
-      src: "{{ tmpdir }}/xi-latest.tar.gz"
-      dest: "{{ tmpdir }}/"
-      remote_src: True
-
-  - block: 
+    - name: Unzip XI tarball
+      unarchive:
+        src: "{{ tmpdir }}/xi-latest.tar.gz"
+        dest: "{{ tmpdir }}/"
+        remote_src: True
     - name: Run upgrade
-      command: ./upgrade
+      shell: ./upgrade -n
       args:
         chdir: "{{ tmpdir }}/nagiosxi"
       register: upgrade_out
 
-    - name: Display results from upgrade script
+    - name: Display stderr from upgrade script
       debug:
-        var: upgrade_out
-        verbosity: 0
+        msg: "{{ upgrade_out.stderr_lines }}"
+
+    - name: Display stdout from upgrade script
+      debug:
+        msg: "{{ upgrade_out.stdout_lines }}"
     when: do_upgrade
+...
