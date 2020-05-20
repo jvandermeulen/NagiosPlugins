@@ -81,7 +81,7 @@
     when: (ansible_distribution == "CentOS" or ansible_distribution == "RedHat") and ansible_distribution_major_version >= '7' and also_resolve_perl_dependencies
 
   - name: run the plugin
-    command: python /usr/local/src/check_yum.py
+    command: python /usr/local/src/check_yum.py --timeout=55
     register: check_yum_output
     failed_when: check_yum_output.rc >= 3
     changed_when: false
