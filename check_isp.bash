@@ -1,4 +1,4 @@
-!/bin/bash
+#!/bin/bash
 # Script:       check_isp.sh
 # Purpose:      Display name of current ISP (according to whois)
 # Version:      0.3     whois changed "Your Internet Service Provider" to "Your ISP".
