@@ -1,7 +1,12 @@
-#!/bin/bash
+!/bin/bash
 # Script:       check_isp.sh
 # Purpose:      Display name of current ISP (according to whois)
 # Version:      0.3     whois changed "Your Internet Service Provider" to "Your ISP".
+#                       example output: 
+#                       Info: ISP is Xs4all Internet BV
+# Version:      0.4     added 2nd line holding 'aka' information
+#                       example output: 
+#                       Info: ISP is Xs4all Internet BV also known as 'XS4ALL Networking'
 # Author:       Conclusion Xforce - Jorgen van der Meulen
 #
 WHOIS_URL="https://www.whoismyisp.org"
@@ -30,4 +35,5 @@ case ${HTTP_CODE} in
     ;;
   esac
 
-curl -s ${WHOIS_URL} | awk '/Your ISP is/ {getline; print $0}' | sed -e 's/<[^>]*>//g'  -e 's/^[ \t]*//'
+#curl -s ${WHOIS_URL} | awk '/Your ISP is/ {getline; print $0}' | sed -e 's/<[^>]*>//g'  -e 's/^[ \t]*//'
+curl -s ${WHOIS_URL} | awk '/Your ISP is/ {getline; printf $0; getline; print $0}' | sed -e 's/<[^>]*>//g'  -e 's/^[ \t]*//' | tr -s ' '
