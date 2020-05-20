@@ -11,8 +11,10 @@
 #
 WHOIS_URL="https://www.whoismyisp.org"
 
-# Check availability
+# Check required binaries
+type curl >/dev/null 2>&1 || { echo >&2 "Please install curl package."; exit 3; }
 
+# Check availability
 HTTP_CODE=$(curl -sL --connect-timeout 20 -w "%{http_code}\\n" ${WHOIS_URL} -o /dev/null)
 case ${HTTP_CODE} in
   [2]*)
@@ -34,6 +36,7 @@ case ${HTTP_CODE} in
     exit 2
     ;;
   esac
-
+  
+# Continue displaying ISP info as long as http_code status starts with 2xx
 #curl -s ${WHOIS_URL} | awk '/Your ISP is/ {getline; print $0}' | sed -e 's/<[^>]*>//g'  -e 's/^[ \t]*//'
 curl -s ${WHOIS_URL} | awk '/Your ISP is/ {getline; printf $0; getline; print $0}' | sed -e 's/<[^>]*>//g'  -e 's/^[ \t]*//' | tr -s ' '
